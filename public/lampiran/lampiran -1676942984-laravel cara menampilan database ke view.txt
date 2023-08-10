@@ -1,0 +1,16 @@
+cara menampilkan database ke view laravel
+jangan lupa pake
+use App\RuangRapat;
+use Illuminate\Support\Facades\DB;
+
+
+buat model menggunakan
+php artisan make:model nama_model
+nama model harus diawali dengan huruf besar
+
+1. buat routenya
+href"{{route ('namaroute')}}
+
+buat routenya di web.php
+
+Route::get("/nama_routenya", "Homecontroller@namaroute")->name("namaroute")
