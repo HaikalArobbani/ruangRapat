@@ -49,7 +49,7 @@ use App\Models\PegawaiAbsen;
                     <label>Nama </label>
                     <input type="text" name="PegawaiAbsen" id="PegawaiAbsen" class="kondisi form-control" required placeholder="Nama">
 
-                    <label for="">Divisi / Instansi </label>
+                    <label for="">Divisi hahah / Instansi </label>
                     <input type="text" name="divisi" id="divisi" class=" form-control" required>
                     <div class="form-group">
                         <label>Jabatan</label>

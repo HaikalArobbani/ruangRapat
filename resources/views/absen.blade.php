@@ -94,26 +94,25 @@ $roleTamu = Auth::user()->role;
 
                     </select>
                     <div class="form-group">
-                        @if($roleTamu < 4 ) <label>Jabatan</label>
-                            <select name="jabatan" id="jabatan" class="form-control" required>
-                                <option value="">Pilih Jenis</option>
-                                <?php
-                                $jabatanAbsen = array(); // Array untuk melacak jabatan yang sudah digunakan
-                                ?>
-                                @foreach($PegawaiAbsen as $pa)
-                                <?php
-                                if (!in_array($pa->jabatan, $jabatanAbsen)) {
-                                    // Jika jabatan belum digunakan sebelumnya, tampilkan dalam opsi
-                                    $jabatanAbsen[] = $pa->jabatan; // Tambahkan jabatan ke dalam array yang sudah digunakan
-                                ?>
-                                    <option value="{{$pa->jabatan}}">{{$pa->jabatan}}</option>
-                                <?php
-                                }
-                                ?>
-                                @endforeach
-                            </select>
-                            @else
-                            @endif
+                        <label>Jabatan</label>
+                        <select name="jabatan" id="jabatan" class="form-control" required>
+                            <option value="">Pilih Jenis</option>
+                            <?php
+                            $jabatanAbsen = array(); // Array untuk melacak jabatan yang sudah digunakan
+                            ?>
+                            @foreach($PegawaiAbsen as $pa)
+                            <?php
+                            if (!in_array($pa->jabatan, $jabatanAbsen)) {
+                                // Jika jabatan belum digunakan sebelumnya, tampilkan dalam opsi
+                                $jabatanAbsen[] = $pa->jabatan; // Tambahkan jabatan ke dalam array yang sudah digunakan
+                            ?>
+                                <option value="{{$pa->jabatan}}">{{$pa->jabatan}}</option>
+                            <?php
+                            }
+                            ?>
+                            @endforeach
+                        </select>
+
                     </div>
                 </div>
                 @endif

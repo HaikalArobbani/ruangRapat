@@ -1046,7 +1046,7 @@ $jumlah_notif = Permohonan_Rapat::where('status_baca', 1)->where('status',  3)->
                         // kondisi divisi yang login
                         if ($divisiRapat > 0) {
                         ?>
-                            <select name="divisi" id="" class="" disabled required>
+                            <select name="divisi" id="" class="form-control" disabled required>
 
                                 <option>Select Item</option>
 
@@ -1105,7 +1105,7 @@ $jumlah_notif = Permohonan_Rapat::where('status_baca', 1)->where('status',  3)->
 
                         <input type="hidden" name="kapasitas_ruangan" id="kapasitas_ruangan" value="">
 
-                        <input type="hidden" id="durasi" name="durasi" value="">
+                        <input type="text" id="durasi" name="durasi" value="">
                         <?php
                         $durasiValidasi = 'durasi';
                         ?>
@@ -1371,31 +1371,18 @@ $jumlah_notif = Permohonan_Rapat::where('status_baca', 1)->where('status',  3)->
 </script>
 
 <script>
-    // Ambil elemen input waktu masuk, waktu keluar, dan input durasi pada form
-    // Ambil elemen input waktu masuk, waktu keluar, dan input durasi pada form
     var waktuMasukInput = document.getElementById('tanggal_pinjam');
     var waktuKeluarInput = document.getElementById('tanggal_selesai');
     var durasiInput = document.getElementById('durasi');
 
-    // Tambahkan event listener untuk mendeteksi perubahan nilai pada input waktu keluar
     waktuKeluarInput.addEventListener('change', hitungDanTampilkanDurasi);
 
-    // Fungsi untuk menghitung dan menampilkan durasi waktu
     function hitungDanTampilkanDurasi() {
-        // Dapatkan nilai tanggal dan waktu dari elemen input
-        var tanggalPinjamValue = waktuMasukInput.value;
-        var tanggalSelesaiValue = waktuKeluarInput.value;
+        var tanggalPinjamValue = new Date(waktuMasukInput.value);
+        var tanggalSelesaiValue = new Date(waktuKeluarInput.value);
 
-        // Ambil bagian waktu saja (jam) menggunakan pemisah 'T'
-        var jamMasuk = tanggalPinjamValue.split('T')[1].split(':')[0];
-        var jamKeluar = tanggalSelesaiValue.split('T')[1].split(':')[0];
-
-        // Konversi nilai waktu yang diambil menjadi bilangan bulat (integer)
-        jamMasuk = parseInt(jamMasuk, 10);
-        jamKeluar = parseInt(jamKeluar, 10);
-
-        // Hitung selisih waktu dalam jam
-        var durasiJam = jamKeluar - jamMasuk;
+        var selisihWaktu = tanggalSelesaiValue - tanggalPinjamValue; // Menghitung selisih waktu dalam milidetik
+        var durasiJam = selisihWaktu / (1000 * 60 * 60); // Menghitung durasi dalam jam
 
         // Tampilkan durasi waktu pada input durasi pada form
         durasiInput.value = durasiJam;
@@ -1412,14 +1399,12 @@ $jumlah_notif = Permohonan_Rapat::where('status_baca', 1)->where('status',  3)->
             select2.appendChild(optionA);
             select2.appendChild(optionB);
             select2.appendChild(optionC);
-
         } else {
             select2.innerHTML = '';
             var optionD = new Option('Zoom', 'Zoom');
             var optionE = new Option('Snack', 'Snack');
             select2.appendChild(optionD);
             select2.appendChild(optionE);
-
         }
     }
 </script>

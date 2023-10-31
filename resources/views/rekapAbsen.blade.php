@@ -47,7 +47,6 @@ use Illuminate\Support\Facades\Auth;
                                                         <th width=>Divisi / Instansi</th>
                                                         <th width=>Jabatan</th>
                                                         <th width="20%">Waktu Absen</th>
-
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -59,10 +58,10 @@ use Illuminate\Support\Facades\Auth;
                                                         <td>{{ $no++ }}</td>
                                                         <td>
 
-                                                            {{ $ra->nama }}
+                                                            {{ $ra->rekapAbsen->nama }}
                                                         </td>
                                                         <td>
-                                                            {{$ra->nama}}
+                                                            {{$ra->divisiAbsen->nama}}
                                                         </td>
                                                         <td>
                                                             {{ $ra->jabatan }}
