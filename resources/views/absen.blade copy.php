@@ -33,7 +33,7 @@ $roleTamu = Auth::user()->role;
     {{ Session::get('sukses') }}
 </div>
 @endif
-<div class="col-md-12">
+<div class="col-lg-6">
     <div class="panel panel-primary">
         <div class="panel-heading">
             <h3 class="panel-title">ABSEN PESERTA RAPAT</h3>
@@ -117,6 +117,40 @@ $roleTamu = Auth::user()->role;
                 </div>
                 @endif
 
+
+
+                {{-- <button type="button" id="resetSignature" class="btn small btn-warning">Reset Tanda
+                                    Tangan</button> --}}
+
+                                {{-- <label>Nama </label>
+                                    <select name="PegawaiAbsen" id="PegawaiAbsen" class="form-control select2-dropdown" required>
+                                        <option value="">Pilih Pegawai</option>
+                                        @foreach ($PegawaiAbsen as $pa)
+                                            @if ($pa->divisi_id == $divisiRapat)
+                                                <option value="{{ $pa->id }}">{{ $pa->nama }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select> --}}
+                                <div class="form-group">
+                                    <label>Jabatan</label>
+                                    <select name="jabatan" id="jabatan" class="form-control" required>
+                                        <option value="">Pilih Jenis</option>
+                                        <?php
+                                        $jabatanAbsen = []; // Array untuk melacak jabatan yang sudah digunakan
+                                        ?>
+                                        @foreach ($PegawaiAbsen as $pa)
+                                            <?php
+                                    if (!in_array($pa->jabatan, $jabatanAbsen)) {
+                                        // Jika jabatan belum digunakan sebelumnya, tampilkan dalam opsi
+                                        $jabatanAbsen[] = $pa->jabatan; // Tambahkan jabatan ke dalam array yang sudah digunakan
+                                    ?>
+                                            <option value="{{ $pa->jabatan }}">{{ $pa->jabatan }}</option>
+                                            <?php
+                                    }
+                                    ?>
+                                        @endforeach
+                                    </select>
+                                </div>
                 <input type="hidden" value="{{$id_permohonanRapat}}" name="id_permohonanRapat">
                 <div class="">
                     <button type="submit" class="btn btn-dark waves-effect waves-light">ABSEN</button>

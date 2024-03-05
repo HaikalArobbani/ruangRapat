@@ -9,6 +9,7 @@ use App\Models\Absen;
 use App\Models\Permohonan_Rapat;
 use App\Models\Divisi;
 use App\Models\Fasilitas_Baru;
+
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use DateTime;
@@ -383,30 +384,28 @@ class HomeController extends Controller
     public function permohonan_rapat(Request $request)
 
     {
+        $divisiRapat = Auth::user()->divisiRapat;
+
         $permohonan_rapat = Permohonan_Rapat::where('status', 1)->orderBy('id', 'desc')->get(); //status
         $permohonan_rapat2 = Permohonan_Rapat::where('status', 2)->get(); //status
         $permohonan_rapat3 = Permohonan_Rapat::where('status', 3)->get(); //status
         $permohonan_rapat4 = Permohonan_Rapat::where('status', 4)->get(); //status
 
-        $jumlah_ditolak = count($permohonan_rapat3); // Hitung jumlah permohonan_rapat3 yang ada
-
-
+        $jumlah_ditolak = count($permohonan_rapat3);
 
         $divisi = Divisi::all();
-        $pegawai = Pegawai::all();
+        if($divisiRapat){
+            $pegawai = PegawaiAbsen::where('divisi_id', $divisiRapat)->get();
+        } else {
+            $pegawai = PegawaiAbsen::all();
+        }
+       
         $fasilitas = Fasilitas::all();
         $ruangRapat = RuangRapat::all();
         $id_permohonan_rapat = Absen::all();
 
-        // $rekapAbsen = Absen::where('id_permohonan_rapat', $id_permohonan_rapat)->get();
-        //filter untuk menampilkan ruangrapat yang memiliki status  
-
-        // $testing = Permohonan_Rapat::get()->load('pegawai')
-
 
         return view('permohonan_rapat', ['permohonan_rapat' => $permohonan_rapat, 'pegawai' => $pegawai, 'fasilitas' => $fasilitas, 'ruangRapat' => $ruangRapat, 'divisi' => $divisi, 'permohonan_rapat2' => $permohonan_rapat2, 'permohonan_rapat3' => $permohonan_rapat3, 'permohonan_rapat4' => $permohonan_rapat4,]);
-
-        // return view('permohonan_rapat', ['permohonan_rapat' => $permohonan_rapat, 'pegawai' => $pegawai, 'fasilitas' => $fasilitas, 'ruangRapat' => $ruangRapat, 'divisi' => $divisi, 'permohonan_rapat2' => $permohonan_rapat2, 'permohonan_rapat3' => $permohonan_rapat3, 'permohonan_rapat4' => $permohonan_rapat4, 'rekapAbsen' => $rekapAbsen]);
     }
 
 

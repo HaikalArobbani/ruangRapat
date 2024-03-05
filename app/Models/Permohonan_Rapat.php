@@ -20,6 +20,14 @@ class Permohonan_Rapat extends Model
             // withDefault berfungsi menggantikan isi kolom nama menjadi - jika kolom nama di hapus
         ]);
     }
+
+    public function pegawai_absen()
+    {
+        return $this->belongsTo('App\Models\PegawaiAbsen', 'nama_pemohon')->withDefault([
+            'nama' => '-',
+            // withDefault berfungsi menggantikan isi kolom nama menjadi - jika kolom nama di hapus
+        ]);
+    }
     public function pegawai_notulen()
     {
         return $this->belongsTo('App\Models\Pegawai', 'notulen')->withDefault([
@@ -37,7 +45,7 @@ class Permohonan_Rapat extends Model
     {
         return $this->belongsTo('App\Models\RuangRapat', 'id_ruangrapat')->withDefault([
             'nama' => '-',
-        ]);;
+        ]);
     }
 
     public function absen()
@@ -61,6 +69,24 @@ class Permohonan_Rapat extends Model
             // withDefault berfungsi menggantikan isi kolom nama menjadi - jika kolom nama di hapus
         ]);
     }
+
+    public function pengajuanRapat()
+    {
+        // 'id_ajuan' adalah foreign key di tabel 'permohonan_rapat'
+        // yang mengacu pada 'id' di tabel 'pengajuan_rapat'
+        return $this->belongsTo(Pengajuan_Rapat::class, 'id_ajuan');
+    }
+
+    public function pesertaRapat()
+    {
+        return $this->hasMany(Peserta_rapat::class, 'id_permohonan_rapat');
+    }
+
+//     public function peserta_absen()
+// {
+//     return $this->hasMany('App\Models\Peserta_rapat', 'id_permohonan_rapat');
+// }
+
 
 
     public function getCreatedAtAttribute()

@@ -9,6 +9,8 @@ use App\Models\Absen;
 use App\Models\Permohonan_Rapat;
 use App\Models\Divisi;
 use App\Models\Fasilitas_Baru;
+use App\Models\Pengajuan_rapat;
+use App\Models\Peserta_rapat;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use DateTime;
@@ -31,7 +33,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Exports\PermohonanExport;
 use App\Exports\PermohonanSelesaiExport;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 use function GuzzleHttp\Promise\all;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\PDF as DomPDFPDF;
@@ -47,7 +49,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except(['simpan_tamu_absen']);
     }
 
     /**
@@ -55,10 +57,33 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
+
+
+
+    // home
     public function index()
     {
-        return view('home');
+        $ruangan = RuangRapat::all(); // Mengambil semua data ruangan
+        $fasilitas_baru = Fasilitas_Baru::all();
+        return view('home', compact('ruangan', 'fasilitas_baru'));
     }
+
+    // ruangan - home
+    public function getRoomDetails($id)
+{
+    $ruangan = RuangRapat::find($id); // Mengambil data ruangan berdasarkan ID
+    if ($ruangan) {
+        return response()->json([
+            'nama' => $ruangan->nama,
+            'kapasitas' => $ruangan->kapasitas,
+            'id_fasilitas_baru' => $ruangan->id_fasilitas_baru,
+            'lokasi' => $ruangan->lokasi,
+            // tambahkan properti lain jika perlu
+        ]);
+    } else {
+        return response()->json(['error' => 'Ruangan tidak ditemukan'], 404);
+    }
+}
 
     public function status()
     {
@@ -372,8 +397,6 @@ class HomeController extends Controller
         // menghapus data pegawai berdasarkan id yang dipilih
         DB::table('fasilitas')->where('id', $id)->delete();
         // alihkan halaman ke halaman pegawai
-
-
         return redirect('fasilitas')->with("Berhasil di hapus");
     }
 
@@ -381,17 +404,51 @@ class HomeController extends Controller
 
     //Permohonan Rapat
 
-    public function permohonan_rapat(Request $request)
-
+    public function getEvents(Request $request)
     {
+    $events = Permohonan_Rapat::with(['ruangRapat', 'divisiPermohonan'])->get();
+    return response()->json($events->map(function ($event) {
+        return [
+            'id' => $event->id, // tanggal selesai
+            'title' => $event->divisiPermohonan->nama, // nama event
+            'start' => $event->tanggal_pinjam, // tanggal mulai
+            'end' => $event->tanggal_selesai, // tanggal selesai
+            'id_ruangrapat' => $event->id_ruangrapat, // ID ruang rapat
+            'jumlah_peserta' => $event->jumlah_peserta,
+            'nama_rapat' => $event->nama_rapat,
+            'nama_divisi' => $event->divisiPermohonan->nama, // Asumsi relasi mengembalikan objek dengan properti 'nama'
+            'nama_ruangan' => $event->ruangRapat->nama, // Asumsi relasi mengembalikan objek dengan properti 'nama'
+            // Tambahkan properti lain yang dibutuhkan oleh FullCalendar
+        ];
+    }));
+    // dd($permohonan_rapat2);
+    dd($events);
+    // return Response::json($events);
+    }
+    public function detailEvent(Request $request, $id) {
+    $event = Permohonan_Rapat::with('ruanganRapat')->findOrFail($id);
+
+    return response()->json([
+        'id' => $event->id,
+        'nama_rapat' => $event->nama_rapat,
+        'start' => $event->tanggal_pinjam,
+        'end' => $event->tanggal_selesai,
+        'description' => $event->ruanganRapat->nama,
+        // 'nama_ruangan' => $event->ruanganRapat->nama,
+        // tambahkan properti lain yang diperlukan
+    ]);
+    }
+
+
+    public function permohonan_rapat(Request $request)
+    {
+        $divisiRapat = Auth::user()->divisiRapat;
         $permohonan_rapat = Permohonan_Rapat::where('status', 1)->orderBy('id', 'desc')->get(); //status
         $permohonan_rapat2 = Permohonan_Rapat::where('status', 2)->get(); //status
         $permohonan_rapat3 = Permohonan_Rapat::where('status', 3)->get(); //status
         $permohonan_rapat4 = Permohonan_Rapat::where('status', 4)->get(); //status
 
-        $jumlah_ditolak = count($permohonan_rapat3); // Hitung jumlah permohonan_rapat3 yang ada
-
-
+        $jumlah_ditolak = count($permohonan_rapat3);
 
         $divisi = Divisi::all();
         $pegawai = Pegawai::all();
@@ -399,15 +456,164 @@ class HomeController extends Controller
         $ruangRapat = RuangRapat::all();
         $id_permohonan_rapat = Absen::all();
 
-        // $rekapAbsen = Absen::where('id_permohonan_rapat', $id_permohonan_rapat)->get();
-        //filter untuk menampilkan ruangrapat yang memiliki status  
-
-        // $testing = Permohonan_Rapat::get()->load('pegawai')
-
+        if ($divisiRapat) {
+            $pegawai = PegawaiAbsen::where('divisi_id', $divisiRapat)->get();
+        } else {
+            $pegawai = PegawaiAbsen::all();
+        }
 
         return view('permohonan_rapat', ['permohonan_rapat' => $permohonan_rapat, 'pegawai' => $pegawai, 'fasilitas' => $fasilitas, 'ruangRapat' => $ruangRapat, 'divisi' => $divisi, 'permohonan_rapat2' => $permohonan_rapat2, 'permohonan_rapat3' => $permohonan_rapat3, 'permohonan_rapat4' => $permohonan_rapat4,]);
+    }
 
-        // return view('permohonan_rapat', ['permohonan_rapat' => $permohonan_rapat, 'pegawai' => $pegawai, 'fasilitas' => $fasilitas, 'ruangRapat' => $ruangRapat, 'divisi' => $divisi, 'permohonan_rapat2' => $permohonan_rapat2, 'permohonan_rapat3' => $permohonan_rapat3, 'permohonan_rapat4' => $permohonan_rapat4, 'rekapAbsen' => $rekapAbsen]);
+    public function getDivisi(Request $request)
+    {
+        $pemohonId = $request->input('pemohonId');
+        $pegawai = PegawaiAbsen::findOrFail($pemohonId);
+        $divisi = Divisi::where('id', $pegawai->divisi_id)->first();
+
+        return response()->json(['divisi' => $divisi]);
+    }
+
+    public function getRuang(Request $request)
+    {
+        $ruangId = $request->input('ruangId');
+
+        try {
+            $ruang = RuangRapat::findOrFail($ruangId);
+            $today = Carbon::now()->toDateString();
+            $permohonan = Permohonan_Rapat::with('divisi')
+                ->where('id_ruangrapat', $ruangId)
+                ->where('status', 'diterima')
+                ->whereDate('tanggal_pinjam', $today)
+                ->get();
+
+            return response()->json(['ruang' => $ruang, 'permohonan' => $permohonan]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Data ruang tidak ditemukan.'], 404);
+        }
+    }
+
+    public function getPengajuanJson()
+    {
+        // $dataPengajuan = Permohonan_Rapat::orderBy('id', 'desc')->get();
+        $roleAdmin = Auth::user()->adminRuangan;
+        if ($roleAdmin < 2)
+        {
+            $dataPengajuan = Permohonan_Rapat::with(['pengajuanRapat' => function ($query) use ($roleAdmin) {
+                $query->where('status', 'menunggu');
+            }])->whereHas('pengajuanRapat', function ($query) use ($roleAdmin) {
+                $query->where('status', 'menunggu');
+            })->orderBy('id', 'desc')->get();            
+        } else {
+            $dataPengajuan = Permohonan_Rapat::with(['pengajuanRapat' => function ($query) use ($roleAdmin) {
+                $query->where('status', 'menunggu');
+            }])->whereHas('pengajuanRapat', function ($query) use ($roleAdmin) {
+                $query->where('status', 'menunggu')
+                      ->where('id_ruangrapat', $roleAdmin);
+            })->orderBy('id', 'desc')->get();
+        }
+
+        return response()->json(['data' => $dataPengajuan]);
+    }
+
+    public function getDetailAjuan(Request $request)
+    {
+        $idAjuan = $request->input('idAjuan');
+        // dd($idAjuan);
+        $permohonan_rapat = Permohonan_Rapat::with(['divisi', 'ruangrapat', 'pegawai_absen'])->where('id_ajuan', $idAjuan)->get();
+        $idPermohonanRapat = Permohonan_Rapat::where('id_ajuan', $idAjuan)->first();
+       
+        $pesertaRapat = Peserta_rapat::with(['pegawai_absen.divisipegawai'])->where('id_permohonan_rapat', $idPermohonanRapat->id)->get();
+        return response()->json(['ajuan' => $permohonan_rapat, 'peserta' => $pesertaRapat, 'idPermohonanRapat' => $idPermohonanRapat]);
+    }
+
+    public function hapusAjuan($id)
+    {
+        $ajuan = Pengajuan_rapat::find($id);
+
+        if ($ajuan) {
+            $id_ajuan = $ajuan->id;
+            $id_permohonan_rapat = Permohonan_Rapat::where('id_ajuan', $id_ajuan)->first();
+            Peserta_rapat::where('id_permohonan_rapat', $id_permohonan_rapat->id)->delete();
+            Permohonan_Rapat::where('id_ajuan', $id_ajuan)->delete();
+            $ajuan->delete();
+
+            return response()->json(['status' => 'success', 'message' => 'Data berhasil dihapus.']);
+        } else {
+            return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan.']);
+        }
+    }
+
+    public function simpanAjuan(Request $request)
+    {
+        $userId = Auth::id();
+
+        $data = new Pengajuan_rapat;
+        $data->status = 'menunggu';
+        $data->save();
+        $id_pengajuan = $data->id;
+
+        $tanggalDanDurasi = $request->input('tanggalDanDurasi');
+        $selectedParticipants = $request->input('selectedParticipants');
+        $jumlahPeserta = count($selectedParticipants);
+
+        foreach ($tanggalDanDurasi as $dataTanggalDurasi) {
+            $tanggal_pinjam = $dataTanggalDurasi['waktu_pinjam'];
+            $durasi_pinjam = $dataTanggalDurasi['durasi_pinjam'];
+            $tanggal_selesai = date('Y-m-d H:i:s', strtotime($tanggal_pinjam . ' + ' . $durasi_pinjam . ' hours'));
+            $ruangan = $request->input('idRuangan');
+
+            $jadwal_bentrok = Permohonan_Rapat::where('id_ruangrapat', $ruangan)
+                ->where('status', '!=', 'selesai')
+                ->where(function ($query) use ($tanggal_pinjam, $tanggal_selesai) {
+                    $query->where(function ($subquery) use ($tanggal_pinjam, $tanggal_selesai) {
+                        $subquery->where('tanggal_pinjam', '>=', $tanggal_pinjam)
+                            ->where('tanggal_pinjam', '<', $tanggal_selesai);
+                    })
+                        ->orWhere(function ($subquery) use ($tanggal_pinjam, $tanggal_selesai) {
+                            $subquery->where('tanggal_selesai', '>', $tanggal_pinjam)
+                                ->where('tanggal_selesai', '<=', $tanggal_selesai);
+                        })
+                        ->orWhere(function ($subquery) use ($tanggal_pinjam, $tanggal_selesai) {
+                            $subquery->where('tanggal_pinjam', '<=', $tanggal_pinjam)
+                                ->where('tanggal_selesai', '>=', $tanggal_selesai);
+                        });
+                })
+                ->count();
+            // dd($jadwal_bentrok);
+
+            if ($jadwal_bentrok != 0) {
+                $hapusAjuan = Pengajuan_rapat::findorfail($id_pengajuan);
+                $hapusAjuan->delete();
+
+                return response()->json(['status' => 'error', 'message' => 'Penyimpanan tidak berhasil karena jadwal sudah terisi']);
+                // break; 
+            }
+
+            $data2 = new Permohonan_Rapat;
+            $data2->id_ajuan = $id_pengajuan;
+            $data2->nama_pemohon = $request->input('tambahNamaPemohon');
+            $data2->divisi = $request->input('tambahDivisi');
+            $data2->tanggal_pinjam = $tanggal_pinjam;
+            $data2->tanggal_selesai = $tanggal_selesai;
+            $data2->hari = 11;
+            $data2->jumlah_peserta = $jumlahPeserta;
+            $data2->id_ruangrapat = $ruangan;
+            $data2->nama_rapat = $request->input('namaKegiatan');
+            $data2->status = 1;
+            $data2->durasi = 11;
+            $data2->save();
+
+            $id_permohonan_rapat = $data2->id;
+
+            foreach ($selectedParticipants as $participant) {
+                $pesertaTerpilih = new Peserta_rapat;
+                $pesertaTerpilih->id_permohonan_rapat = $id_permohonan_rapat;
+                $pesertaTerpilih->id_pegawai_absen = $participant['id'];
+                $pesertaTerpilih->save();
+            }
+        }
+        return response()->json(['status' => 'success', 'message' => 'Data berhasil disimpan.']);
     }
 
 
@@ -456,7 +662,7 @@ class HomeController extends Controller
         $ruangRapat = RuangRapat::where('id', $request->post('id_ruangrapat'))->first();
         $kapasitas = $ruangRapat->kapasitas;
 
-        $waktuMasuk  = $request->post('waktu_masuk');
+        $waktuMasuk = $request->post('waktu_masuk');
         $waktuKeluar = $request->post('waktu_keluar');
 
         $datetimeMasuk = new DateTime($waktuMasuk);
@@ -625,7 +831,7 @@ class HomeController extends Controller
 
 
 
-        $waktuMasuk  = $request->post('waktu_masuk');
+        $waktuMasuk = $request->post('waktu_masuk');
         $waktuKeluar = $request->post('waktu_keluar');
 
         $nd1 = new DateTime($waktuMasuk);
@@ -713,10 +919,10 @@ class HomeController extends Controller
             'kode_absen' => $request->post('kode_absen')
         );
 
-        $idRapat =  $request->post('id_ruangrapat_status');
-        $tglMasuk =  strtotime($request->post('tglpinjam'));
+        $idRapat = $request->post('id_ruangrapat_status');
+        $tglMasuk = strtotime($request->post('tglpinjam'));
         $jamMasuk = $request->post('tglMasukTerima');
-        $tglKeluar =  strtotime($request->post('tglpinjam'));
+        $tglKeluar = strtotime($request->post('tglpinjam'));
         $jamKeliar =
             $newStartDateTime = strtotime($request->post('tglpinjam') . ' ' . $request->post('tglMasukTerima'));
         $newEndDateTime = strtotime($request->post('tglpinjam') . ' ' . $request->post('tglKeluarTerima'));
@@ -852,12 +1058,12 @@ class HomeController extends Controller
     }
 
     //jadwal
-    public function agenda(Request $request)
+    public function agendaOLD(Request $request)
     {
         $ruangRapat = RuangRapat::all();
 
         // buat filter tanggal  
-        $awal  = $request->awal;
+        $awal = $request->awal;
         //ambil dari id di form
         //ambil nilai inputan
         $akhir = $request->akhir;
@@ -872,7 +1078,7 @@ class HomeController extends Controller
         if (is_Null($awal)) {
             $dt = Carbon::now();
             //untuk mendapatkan tanggal hari ini
-            $permohonan_rapat = Permohonan_Rapat::where('status', 2)->whereDate('waktu_masuk',   $dt->toDateString())->orderBy("id_ruangrapat", "desc")->get(); //status 
+            $permohonan_rapat = Permohonan_Rapat::where('status', 2)->whereDate('waktu_masuk', $dt->toDateString())->orderBy("id_ruangrapat", "desc")->get(); //status 
             $data1 = RuangRapat::whereDoesntHave('permohonan_rapat', function ($query) {
                 $query->where('status', 2)->whereDate('waktu_masuk', Carbon::now());
             })->get();
@@ -986,23 +1192,27 @@ class HomeController extends Controller
 
         // dd($kode_absen);
         if ($kode_absen == $kode_absen_input) {
-            return view('absen', ['id_permohonanRapat' => $id_permohonanRapat, 'divisi' => $divisi, 'PegawaiAbsen' => $PegawaiAbsen],)->with("sukses", "Silahkan isi Absen");
+            return view('absen', ['id_permohonanRapat' => $id_permohonanRapat, 'divisi' => $divisi, 'PegawaiAbsen' => $PegawaiAbsen], )->with("sukses", "Silahkan isi Absen");
         } else {
             session()->flash('gagal', 'kode Rapat untuk absen salah, silahkan minta ketua rapat untuk kode yang benar');
             return view('permohonan_rapat', ['permohonan_rapat' => $permohonan_rapat, 'pegawai' => $pegawai, 'fasilitas' => $fasilitas, 'ruangRapat' => $ruangRapat, 'permohonan_rapat2' => $permohonan_rapat2, 'permohonan_rapat3' => $permohonan_rapat3, 'permohonan_rapat4' => $permohonan_rapat4, 'divisi' => $divisi], ['sukses' => 'kode']);
         }
     }
 
-    public function rekapAbsen($id)
+   
+
+    public function rekapAbsen($id_permohonan_rapat)
     {
 
-        $id_permohonan_rapat = $id;
-        $rekapAbsen = Absen::where('id_permohonan_rapat', $id_permohonan_rapat)->orderBy("hari", "asc")->get();
-        $rekapAbsen2 = Absen::where([
-            ['id_permohonan_rapat', $id_permohonan_rapat],
-            ['hari', 2]
-        ])->get();
-        return view('rekapAbsen', ['rekapAbsen' => $rekapAbsen, 'id' => $id, 'rekapAbsen2' => $rekapAbsen2]);
+        $id_permohonanRapat = $id_permohonan_rapat;
+        $rekapAbsen = Peserta_rapat::where('id_permohonan_rapat', $id_permohonanRapat)
+        ->where('absen', 'sudah')
+        ->get();
+        // $rekapAbsen2 = Absen::where([
+        //     ['id_permohonan_rapat', $id_permohonan_rapat],
+        //     ['hari', 2]
+        // ])->get();
+        return view('rekapAbsen', ['rekapAbsen' => $rekapAbsen, 'id' => $id_permohonan_rapat]);
     }
 
     //pdf
@@ -1158,4 +1368,109 @@ class HomeController extends Controller
 
         return response()->json($permohonanRapat);
     }
+
+ // absen_rapat
+ public function absen_rapat($id){
+    $peserta_rapat = peserta_rapat::find($id);
+    return view('absen', ['peserta_rapat' => $peserta_rapat]);
+}
+
+
+    //  daftar_rapat_peserta 
+    public function daftar_rapat_peserta()
+{
+    // Mendapatkan id_divRapat dari user yang sedang login
+    $id_divRapat = Auth::user()->divisiRapat;
+
+    // Mengambil data peserta rapat dengan id_pegawai_absen yang sama dengan $id_divRapat
+    // dan memuat relasi 'permohonanRapat' serta relasi bersarang 'ruangRapat'
+    $pesertaRapat = Peserta_rapat::with(['permohonanRapat.ruangRapat'])
+        ->where('id_pegawai_absen', $id_divRapat)
+        ->get();
+
+    // Kirim data ke view
+    return view('daftar_rapat_peserta', compact('pesertaRapat'));
+}
+
+public function daftar_peserta_rapat($id)
+{
+    // Ambil data peserta beserta relasi pegawai_absen dan permohonanRapat
+    $rapatPeserta = Peserta_rapat::with(['pegawai_absen', 'permohonanRapat'])
+        ->where('id_permohonan_rapat', $id)
+        ->get();
+
+    // Kembali ke view dengan data peserta yang ditemukan
+    return view('daftar_peserta_rapat', ['rapatPeserta' => $rapatPeserta]);
+}
+
+
+
+public function update_peserta_absen(Request $request)
+{
+    // Konversi data tanda tangan dari base64 ke file
+    $base64Data = $request->input('tanda_tangan');
+    list(, $base64Data) = explode(',', $base64Data);
+    $decodedData = base64_decode($base64Data);
+    $fileName = uniqid() . '.jpg';
+    $fileDirectory = 'images/ttd/'; // Direktori di dalam folder public
+    $filePath = public_path($fileDirectory . $fileName);
+
+    // dd($filePath);
+    // Simpan file tanda tangan ke disk
+    file_put_contents($filePath, $decodedData);
+
+    // Menyiapkan data untuk update database
+    $data = [
+        'absen' => 'sudah',
+        'ttd_absen' => $fileName,
+        'updated_at' => \Carbon\Carbon::now(),
+    ];
+
+    // Update data peserta rapat di database
+    DB::table('peserta_rapat')
+        ->where('id', $request->input('idruangRapat'))
+        ->update($data);
+
+    // Redirect ke halaman daftar rapat peserta dengan pesan sukses
+    return redirect('daftar_rapat_peserta')->with('sukses', 'Berhasil Absen');
+}
+
+// absen tamu
+public function absen_tamu($id){
+    $permohonan_rapat = Permohonan_Rapat::find($id);
+    return view('absen_tamu', ['permohonan_rapat' => $permohonan_rapat]);
+}
+public function simpan_tamu_absen(Request $request)
+{
+    // Konversi data tanda tangan dari base64 ke file
+    $base64Data = $request->input('tanda_tangan');
+    list(, $base64Data) = explode(',', $base64Data);
+    $decodedData = base64_decode($base64Data);
+    $fileName = uniqid() . '.jpg';
+    $fileDirectory = 'images/ttd/'; // Direktori di dalam folder public
+    $filePath = public_path($fileDirectory . $fileName);
+
+    // dd($filePath);
+    // Simpan file tanda tangan ke disk
+    file_put_contents($filePath, $decodedData);
+    $permohonan_rapat = Permohonan_rapat::all();
+    // Menyiapkan data untuk update database
+    $data = [
+        'id_permohonan_rapat' => $request->input('id_permohonan_rapat'),
+        'nama_tamu' => $request->input('nama_tamu'),
+        'instansi_tamu' => $request->input('instansi_tamu'),
+        'absen' => 'sudah',
+        'ttd_absen' => $fileName,
+        'created_at' => \Carbon\Carbon::now(),
+        'updated_at' => \Carbon\Carbon::now(),
+    ];
+
+    // Simpan data baru ke tabel peserta_rapat
+    DB::table('peserta_rapat')->insert($data);
+    // Redirect ke halaman daftar rapat peserta dengan pesan sukses
+    return view('tamu', compact('permohonan_rapat'));
+
+}
+
+
 }

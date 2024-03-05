@@ -6,11 +6,12 @@
 
     </div>
     @if(Session::has('sukses'))
-    <div class="alert alert-success alert-dismissible fade in">
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-        {{ Session::get('sukses') }}
-    </div>
-    @endif
+        <br>
+        <div class="alert alert-success alert-dismissible text-bg-success border-0 fade show" role="alert">
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        <strong>{{ Session::get('sukses') }} </strong> 
+         </div>
+        @endif
     <div class="row">
         <div class="col-md-12">
             <div class="panel panel-primary">

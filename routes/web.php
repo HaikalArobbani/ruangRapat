@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Models\Permohonan_rapat;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,7 +25,9 @@ Auth::routes();
 
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+// Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+// ruangan-home
+Route::get('/getRoomDetails', [App\Http\Controllers\HomeController::class, 'getRoomDetails'])->name('getRoomDetails');
 
 
 Auth::routes();
@@ -71,6 +74,10 @@ Route::get('/hapusBaru{id}', 'App\Http\Controllers\FasilitasController@hapusBaru
 Route::get('/permohonan_rapat', 'App\Http\Controllers\HomeController@permohonan_rapat')->name('permohonan_rapat');
 Route::post('/simpanPermohonan', 'App\Http\Controllers\HomeController@simpanPermohonan')->name('simpanPermohonan');
 
+// Calendar
+Route::get('/ruang-rapat/events', 'App\Http\Controllers\HomeController@getEvents')->name('getEvents');
+Route::get('/detailEvent', 'App\Http\Controllers\HomeController@detailEvent')->name('detailEvent');
+
 Route::get('/editPermohonan', 'App\Http\Controllers\HomeController@editPermohonan')->name('editPermohonan');
 Route::post('/statusTerima', 'App\Http\Controllers\HomeController@statusTerima')->name('statusTerima');
 Route::get('/editStatus', 'App\Http\Controllers\HomeController@editStatus')->name('editStatus');
@@ -87,20 +94,41 @@ Route::post('/updatePermohonan', 'App\Http\Controllers\HomeController@updatePerm
 
 Route::get('/hapusPermohonan{id}', 'App\Http\Controllers\HomeController@hapusPermohonan');
 Route::get('/detailPermohonan', 'App\Http\Controllers\HomeController@detailPermohonan')->name('detailPermohonan');
+Route::get('/ruang-rapat/events', 'App\Http\Controllers\HomeController@getEvents')->name('getEvents');
+Route::get('/getDivisi', 'App\Http\Controllers\HomeController@getDivisi')->name('getDivisi');
+Route::get('/getRuang', 'App\Http\Controllers\HomeController@getRuang')->name('getRuang');
+Route::get('/getPengajuanJson', 'App\Http\Controllers\HomeController@getPengajuanJson')->name('getPengajuanJson');
+Route::post('/simpanAjuan', 'App\Http\Controllers\HomeController@simpanAjuan')->name('simpanAjuan');
+Route::get('/getDetailAjuan', 'App\Http\Controllers\HomeController@getDetailAjuan')->name('getDetailAjuan');
+Route::get('/hapusAjuan/{id}', 'App\Http\Controllers\HomeController@hapusAjuan')->name('hapusAjuan');
+
+//AGENDA
+Route::get('/agenda', 'App\Http\Controllers\AgendaController@agenda')->name('agenda');
+Route::get('/konfirmasiAjuan', 'App\Http\Controllers\AgendaController@konfirmasiAjuan')->name('konfirmasiAjuan');
+Route::post('/konfirmasiTerimaAksi', 'App\Http\Controllers\AgendaController@konfirmasiTerimaAksi')->name('konfirmasiTerimaAksi');
+Route::post('/konfirmasiTolakAksi', 'App\Http\Controllers\AgendaController@konfirmasiTolakAksi')->name('konfirmasiTolakAksi');
+Route::get('/getAgendaJson', 'App\Http\Controllers\AgendaController@getAgendaJson')->name('getAgendaJson');
+Route::get('/selesaikan', 'App\Http\Controllers\AgendaController@selesaikan')->name('selesaikan');
+Route::get('/getDetailPeserta', 'App\Http\Controllers\AgendaController@getDetailPeserta')->name('getDetailPeserta');
+
+// Riwayat
+Route::get('/riwayat', 'App\Http\Controllers\RiwayatController@riwayat')->name('riwayat');
 
 
 //Jadwal ruangan
-Route::get('/agenda', 'App\Http\Controllers\HomeController@agenda')->name('agenda');
+// Route::get('/agenda', 'App\Http\Controllers\HomeController@agenda')->name('agenda');
 
 //absen
 // Route::get('/absen', [App\Http\Controllers\HomeController::class, 'absen'])->name('absen');
 Route::post('/simpanAbsen', 'App\Http\Controllers\HomeController@simpanAbsen')->name('simpanAbsen');
 
 // Route::post('/absen', 'App\Http\Controllers\HomeController@absen')->name('absen');
-Route::post('/absen', 'App\Http\Controllers\HomeController@absen')->name('absen');
+Route::get('/absenOld', 'App\Http\Controllers\HomeController@absen')->name('absen');
+
+Route::get('/absen_rapat{id_permohonan_rapat}', 'App\Http\Controllers\HomeController@absen_rapat')->name('absen_rapat');
 
 // Route::post('/', 'App\Http\Controllers\HomeController@absen');
-Route::get('/rekapAbsen{id}', 'App\Http\Controllers\HomeController@rekapAbsen')->name('rekapAbsen');
+Route::get('/rekapAbsen{id_permohonan_rapat}', 'App\Http\Controllers\HomeController@rekapAbsen')->name('rekapAbsen');
 
 // pdf
 Route::get('/pdf_rapat{id}', 'App\Http\Controllers\HomeController@pdf_rapat')->name('pdf_rapat');
@@ -168,11 +196,40 @@ Route::get('/edit_isi_Permohonan', 'App\Http\Controllers\DataPegawaiController@e
 
 Route::post('/simpan_isi_absen', 'App\Http\Controllers\DataPegawaiController@simpan_isi_absen')->middleware('guest')->name('simpan_isi_absen');
 
+// List rapat peserta
+Route::get('/daftar_rapat_peserta', [App\Http\Controllers\HomeController::class, 'daftar_rapat_peserta'])->name('daftar_rapat_peserta');
+Route::post('/update_peserta_absen', 'App\Http\Controllers\HomeController@update_peserta_absen')->name('update_peserta_absen');
+
+// List peserta Rapat
+Route::get('/daftar_peserta_rapat{id_permohonan_rapat}', [App\Http\Controllers\HomeController::class, 'daftar_peserta_rapat'])->name('daftar_peserta_rapat');
 
 
+// Tamu
+Route::get('/tamu', function () {
+    $permohonan_rapat = Permohonan_rapat::all();
+    return view('tamu', compact('permohonan_rapat'));
+});
 
 
+//absen
+// Route::get('/absen', [App\Http\Controllers\HomeController::class, 'absen'])->name('absen');
+Route::post('/simpanAbsen', 'App\Http\Controllers\HomeController@simpanAbsen')->name('simpanAbsen');
 
+// Route::post('/absen', 'App\Http\Controllers\HomeController@absen')->name('absen');
+Route::get('/absenOld', 'App\Http\Controllers\HomeController@absen')->name('absen');
+
+Route::get('/absen_rapat{id_permohonan_rapat}', 'App\Http\Controllers\HomeController@absen_rapat')->name('absen_rapat');
+// absen tamu
+Route::get('/absen_tamu{id}', function ($id){
+    $permohonan_rapat = Permohonan_Rapat::find($id);
+    return view('absen_tamu', ['permohonan_rapat' => $permohonan_rapat]);
+});
+
+Route::post('/simpan_tamu_absen', 'App\Http\Controllers\HomeController@simpan_tamu_absen')->name('simpan_tamu_absen');
+
+
+// Route::post('/', 'App\Http\Controllers\HomeController@absen');
+Route::get('/rekapAbsen{id_permohonan_rapat}', 'App\Http\Controllers\HomeController@rekapAbsen')->name('rekapAbsen');
 
 
 

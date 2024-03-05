@@ -92,6 +92,12 @@
                                 <button class="btn btn-primary w-md waves-effect waves-light" type="submit">Log In</button>
                             </div>
                         </div>
+                        <div class="form-group text-center m-t-20">
+                            <div class="col-xs-12">
+                                <a href="/tamu" class="btn btn-default w-md waves-effect waves-light"> Masuk Sebagai Tamu</a>
+                            </div>
+                        </div>
+
 
 
                     </form>

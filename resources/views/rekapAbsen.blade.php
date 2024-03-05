@@ -1,166 +1,79 @@
 @extends('layouts.app')
 
 @section('content')
-<?php
-
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
-
-
-?>
-<div class="row">
-    <div class="col-md-12">
-
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="panel panel-primary">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <h4>Rekap Rapat</h4>
-                    </div>
+    <?php
+    
+    use Illuminate\Support\Carbon;
+    use Illuminate\Support\Facades\Auth;
+    
+    ?>
+    <div>
+        <div>
+            @if (Session::has('sukses'))
+                <br>
+                <div class="alert alert-success alert-dismissible text-bg-success border-0 fade show" role="alert">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+                    <strong>{{ Session::get('sukses') }} </strong>
                 </div>
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="col-md-12 col-sm-12 col-xs-12">
-                            <div>
-                                <div class="panel-body">
-                                    <div class="row">
-                                        <div class="col-md-12 col-sm-12 col-xs-12">
-                                            <div>
-                                                <a href="{{ url('/pdf_rapat' . $id) }}" class="btn btn-sm btn-success " data-id=""> <i class="fa fa-print"></i>
-                                                    PDF </a>
-                                            </div>
+            @endif
+            <div class="row" style="margin-top: 20px;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="panel panel-primary">
+                                <table id="alternative-page-datatable"
+                                    class="table table-striped dt-responsive nowrap w-100" style="margin-top: 20px;">
+                                    <h3>Info Kegiatan</h3>
+                                    <tbody>
+                                        <tr>
+                                            <td>{{ $rekapAbsen->first()->permohonanRapat->nama_rapat ?? 'Nama rapat tidak tersedia' }}
+                                            </td>
+                                            <td>{{ \Carbon\Carbon::parse($rekapAbsen->first()->tanggal_pinjam)->locale('id_ID')->isoFormat('dddd, D MMMM HH:mm') }}
+                                            </td>
+                                        </tr>
+                                    </tbody>
 
-
-                                            <table id="datatable" class="table table-striped table-bordered">
-                                                @if(Session::has('sukses'))
-                                                <div class="alert alert-danger alert-dismissible fade in">
-                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-                                                    {{ Session::get('sukses') }}
-                                                </div>
-                                                @endif
-                                                <thead>
-                                                    <tr>
-                                                        <th width="5%">NO</th>
-                                                        <th width>Nama</th>
-                                                        <th width=>Divisi / Instansi</th>
-                                                        <th width=>Jabatan</th>
-                                                        <th width="20%">Waktu Absen</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @php
-                                                    $no = 1;
-                                                    @endphp
-                                                    @foreach($rekapAbsen as $ra)
-                                                    <tr>
-                                                        <td>{{ $no++ }}</td>
-                                                        <td>
-
-                                                            {{ $ra->rekapAbsen->nama }}
-                                                        </td>
-                                                        <td>
-                                                            {{$ra->divisiAbsen->nama}}
-                                                        </td>
-                                                        <td>
-                                                            {{ $ra->jabatan }}
-
-                                                        </td>
-
-
-                                                        <td>
-                                                            <?php
-                                                            Carbon::setlocale('id');
-                                                            echo Carbon::parse($ra->created_at)->translatedFormat('l, d F Y H:i');
-                                                            ?>
-                                                        </td>
-                                                    </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
+                                </table>
                             </div>
+                            {{-- Tabel --}}
 
+                            <table id="alternative-page-datatable" class="table table-striped dt-responsive nowrap w-100"
+                                style="margin-top: 20px;">
+                                <thead>
+                                    <tr>
+                                        <th width="4%">NO</th>
+                                        <th>Namsdaa Peserta</th>
+                                        <th>Waktu Absen</th>
+                                        <th>Tanda Tangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $no = 1;
+                                    @endphp
+                                    @foreach ($rekapAbsen as $r)
+                                        <tr>
+                                            <td>{{ $no++ }}</td>
+                                            <td>{{ $r->pegawai_absen->nama }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($r->updated_at)->locale('id_ID')->isoFormat('dddd, D MMMM HH:mm') }}
+                                            </td>
+                                            <td>
+                                                @if ($r->ttd_absen)
+                                                    <img src="{{ asset('images/ttd/' . $r->ttd_absen) }}" alt="Tanda Tangan"
+                                                        style="max-width: 100px;">
+                                                @else
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- <div class="row">
-    <div class="col-md-12">
-
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="panel panel-primary">
-                <div class="panel panel-primary">
-                    <div class="panel-heading">
-                        <h4>Rekap Rapat</h4>
-                    </div>
-                </div>
-                <div class="panel-body">
-                    <div class="row">
-                        <div class="col-md-12 col-sm-12 col-xs-12">
-                            <div>
-                                <div class="panel-body">
-                                    <div class="row">
-                                        <div class="col-md-12 col-sm-12 col-xs-12">
-                                            <div>
-                                                <a href="{{ url('/pdf_rapat' . $id) }}" class="btn btn-sm btn-success " data-id=""> <i class="fa fa-print"></i>
-                                                    PDF </a>
-                                            </div>
-
-
-                                            <table id="datatable" class="table table-striped table-bordered">
-                                                @if(Session::has('sukses'))
-                                                <div class="alert alert-danger alert-dismissible fade in">
-                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-                                                    {{ Session::get('sukses') }}
-                                                </div>
-                                                @endif
-                                                <thead>
-                                                    <tr>
-                                                        <th width="5%">NO</th>
-                                                        <th width>Nama</th>
-                                                        <th width=>Divisi</th>
-                                                        <th width=>Jabatan</th>
-                                                        <th width="20%">Waktu Absen</th>
-
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @php
-                                                    $no = 1;
-                                                    @endphp
-                                                    @foreach($rekapAbsen2 as $ra2)
-                                                    <tr>
-                                                        <td>{{ $no++ }}</td>
-                                                        <td>{{ $ra2->nama }}</td>
-                                                        <td>{{ $ra2->jabatan }}</td>
-                                                        <td>{{ $ra2->divisi }}</td>
-                                                        <td>{{ $ra2->created_at->format('H:i:s d/D/M/Y')}}</td>
-
-                                                    </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
-
 @endsection
